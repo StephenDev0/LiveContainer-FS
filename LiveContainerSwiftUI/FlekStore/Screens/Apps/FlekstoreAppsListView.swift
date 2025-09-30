@@ -21,7 +21,7 @@ struct FlekstoreAppsListView: View {
                     .padding(.horizontal)
                 
                 Group {
-                    if viewModel.isLoading {
+                    if viewModel.apps.isEmpty && viewModel.isLoading {
                         ProgressView("Loading apps…")
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else if let error = viewModel.errorMessage {
@@ -34,9 +34,25 @@ struct FlekstoreAppsListView: View {
                             }
                         }
                     } else {
-                        List(viewModel.apps) { app in
-                            AppRow(app: app, selectedTab: $selectedTab)
-                                .buttonStyle(BorderlessButtonStyle())
+                        List {
+                            ForEach(viewModel.apps) { app in
+                                AppRow(app: app, selectedTab: $selectedTab)
+                                    .buttonStyle(BorderlessButtonStyle())
+                                    .onAppear {
+                                        // Load next page when reaching the last item
+                                        if app == viewModel.apps.last {
+                                            Task { await viewModel.fetchApps() }
+                                        }
+                                    }
+                            }
+                            
+                            if viewModel.isLoading {
+                                HStack {
+                                    Spacer()
+                                    ProgressView()
+                                    Spacer()
+                                }
+                            }
                         }
                         .listStyle(.plain)
                     }

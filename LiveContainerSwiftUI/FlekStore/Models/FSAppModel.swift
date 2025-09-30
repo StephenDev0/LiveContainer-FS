@@ -9,7 +9,7 @@ import Foundation
 
 
 
-struct FSAppModel: Identifiable, Codable {
+struct FSAppModel: Identifiable, Codable, Equatable {
     let app_id: Int
     let app_icon: String
     let app_name: String
