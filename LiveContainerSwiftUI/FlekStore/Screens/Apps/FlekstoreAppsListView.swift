@@ -11,6 +11,17 @@ import SwiftUI
 struct FlekstoreAppsListView: View {
     @StateObject private var viewModel = FlekstoreAppsListViewModel()
     @Binding var selectedTab: Int
+    @State private var searchText: String = ""
+    
+    // Filter apps based on search text
+    private var filteredApps: [FSAppModel] {
+        if searchText.isEmpty {
+            return viewModel.apps
+        } else {
+            return viewModel.apps.filter { $0.app_name.localizedCaseInsensitiveContains(searchText) }
+        }
+    }
+    
     var body: some View {
         NavigationView {
             Group {
@@ -27,11 +38,12 @@ struct FlekstoreAppsListView: View {
                         }
                     }
                 } else {
-                    List(viewModel.apps) { app in
+                    List(filteredApps) { app in
                         AppRow(app: app, selectedTab: $selectedTab)
                             .buttonStyle(BorderlessButtonStyle())
                     }
                     .listStyle(.plain)
+                    .searchable(text: $searchText, prompt: "Search apps")
                 }
             }
             .navigationTitle("Updates")
@@ -41,6 +53,7 @@ struct FlekstoreAppsListView: View {
         }
     }
 }
+
 
 // MARK: - Row
 struct AppRow: View {
