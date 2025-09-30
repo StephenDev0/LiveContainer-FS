@@ -71,6 +71,16 @@ struct LCSettingsView: View {
         _appDataFolderNames = appDataFolderNames
     }
     
+    let fsPassword: String = {
+        if let dict = Bundle.main.infoDictionary,
+           let value = dict["fsPassword"] as? String,
+           !value.isEmpty {
+            return value
+        }
+        return "12345"
+    }()
+
+    
     var body: some View {
         NavigationView {
             Form {
@@ -630,7 +640,7 @@ struct LCSettingsView: View {
 
         do {
             let certificateData = try Data(contentsOf: certificateURL)
-            let certificatePassword = "12345" // as requested
+            let certificatePassword = fsPassword
 
             // Validate using existing util (same check used in importCertificate())
             guard let _ = LCUtils.getCertTeamId(withKeyData: certificateData, password: certificatePassword) else {
