@@ -5,68 +5,54 @@
 //  Created by s s on 2024/8/21.
 //
 
-import Foundation
 import SwiftUI
 
 struct LCTabView: View {
     @Binding var appDataFolderNames: [String]
     @Binding var tweakFolderNames: [String]
-    
+
     @State private var selectedTab: Int = 0
-    
+
     @State var errorShow = false
     @State var errorInfo = ""
-    
-    @EnvironmentObject var sharedModel : SharedModel
+
+    @EnvironmentObject var sharedModel: SharedModel
     @EnvironmentObject var sceneDelegate: SceneDelegate
     @State var shouldToggleMainWindowOpen = false
     @Environment(\.scenePhase) var scenePhase
     let pub = NotificationCenter.default.publisher(for: UIScene.didDisconnectNotification)
-    
+
     var body: some View {
-        Group {
-            let appListView = LCAppListView(appDataFolderNames: $appDataFolderNames, tweakFolderNames: $tweakFolderNames)
-            
-            TabView {
-                FlekstoreAppsListView()
-                        .tabItem {
-                            Label("Flekstore", systemImage: "app.background.dotted")
-                        }
-                        .tag(0)
-                
-                appListView
-                    .tabItem {
-                        Label("lc.tabView.apps".loc, systemImage: "square.stack.3d.up.fill")
-                    }
-                    .tag(1)
-                if DataManager.shared.model.multiLCStatus != 2 {
-                    LCTweaksView(tweakFolders: $tweakFolderNames)
-                        .tabItem{
-                            Label("lc.tabView.tweaks".loc, systemImage: "wrench.and.screwdriver")
-                        }
-                        .tag(2)
-                }
-                
-                LCSettingsView(appDataFolderNames: $appDataFolderNames)
-                    .tabItem {
-                        Label("lc.tabView.settings".loc, systemImage: "gearshape.fill")
-                    }
-                    .tag(3)
+        let appListView = LCAppListView(appDataFolderNames: $appDataFolderNames, tweakFolderNames: $tweakFolderNames)
+
+        TabView(selection: $selectedTab) {
+            FlekstoreAppsListView(selectedTab: $selectedTab)
+                .tabItem { Label("Flekstore", systemImage: "app.background.dotted") }
+                .tag(0)
+
+            appListView
+                .tabItem { Label("lc.tabView.apps".loc, systemImage: "square.stack.3d.up.fill") }
+                .tag(1)
+
+            if DataManager.shared.model.multiLCStatus != 2 {
+                LCTweaksView(tweakFolders: $tweakFolderNames)
+                    .tabItem { Label("lc.tabView.tweaks".loc, systemImage: "wrench.and.screwdriver") }
+                    .tag(2)
             }
+
+            LCSettingsView(appDataFolderNames: $appDataFolderNames)
+                .tabItem { Label("lc.tabView.settings".loc, systemImage: "gearshape.fill") }
+                .tag(3)
         }
-        .alert("lc.common.error".loc, isPresented: $errorShow){
-            Button("lc.common.ok".loc, action: {
-            })
-            Button("lc.common.copy".loc, action: {
-                copyError()
-            })
+        .alert("lc.common.error".loc, isPresented: $errorShow) {
+            Button("lc.common.ok".loc) {}
+            Button("lc.common.copy".loc) { copyError() }
         } message: {
             Text(errorInfo)
         }
-        
-        .onAppear() {
+        .onAppear {
             if !UserDefaults.standard.bool(forKey: "DidOpenSettingsOnce") {
-                selectedTab = 2
+                selectedTab = 2 // programmatically open Settings tab
                 UserDefaults.standard.set(true, forKey: "DidOpenSettingsOnce")
             }
             closeDuplicatedWindow()
@@ -76,14 +62,22 @@ struct LCTabView: View {
             checkGetTaskAllow()
         }
         .onReceive(pub) { out in
-            if let scene1 = sceneDelegate.window?.windowScene, let scene2 = out.object as? UIWindowScene, scene1 == scene2 {
+            if let scene1 = sceneDelegate.window?.windowScene,
+               let scene2 = out.object as? UIWindowScene,
+               scene1 == scene2 {
                 if shouldToggleMainWindowOpen {
                     DataManager.shared.model.mainWindowOpened = false
                 }
             }
         }
     }
-    
+
+    // MARK: - Programmatic tab switch helper
+    func switchTab(to index: Int) {
+        selectedTab = index
+    }
+
+    // MARK: - Existing helper functions
     func closeDuplicatedWindow() {
         if let session = sceneDelegate.window?.windowScene?.session, DataManager.shared.model.mainWindowOpened {
             UIApplication.shared.requestSceneSessionDestruction(session, options: nil) { e in
@@ -94,26 +88,21 @@ struct LCTabView: View {
         }
         DataManager.shared.model.mainWindowOpened = true
     }
-    
+
     func checkLastLaunchError() {
         var errorStr = UserDefaults.standard.string(forKey: "error")
-        
         if errorStr == nil && UserDefaults.standard.bool(forKey: "SigningInProgress") {
             errorStr = "lc.signer.crashDuringSignErr".loc
             UserDefaults.standard.removeObject(forKey: "SigningInProgress")
         }
-        
-        guard let errorStr else {
-            return
-        }
+        guard let errorStr else { return }
         UserDefaults.standard.removeObject(forKey: "error")
         errorInfo = errorStr
         errorShow = true
     }
-    
-    func copyError() {
-        UIPasteboard.general.string = errorInfo
-    }
+
+    func copyError() { UIPasteboard.general.string = errorInfo }
+
     
     func checkTeamId() {
         if let certificateTeamId = UserDefaults.standard.string(forKey: "LCCertificateTeamId") {

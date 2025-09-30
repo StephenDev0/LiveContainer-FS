@@ -10,7 +10,7 @@ import SwiftUI
 // MARK: - View
 struct FlekstoreAppsListView: View {
     @StateObject private var viewModel = FlekstoreAppsListViewModel()
-
+    @Binding var selectedTab: Int
     var body: some View {
         NavigationView {
             Group {
@@ -28,7 +28,7 @@ struct FlekstoreAppsListView: View {
                     }
                 } else {
                     List(viewModel.apps) { app in
-                        AppRow(app: app)
+                        AppRow(app: app, selectedTab: $selectedTab)
                             .buttonStyle(BorderlessButtonStyle())
                     }
                     .listStyle(.plain)
@@ -45,6 +45,7 @@ struct FlekstoreAppsListView: View {
 // MARK: - Row
 struct AppRow: View {
     let app: FSAppModel
+    @Binding var selectedTab: Int
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             AsyncImage(url: URL(string: app.app_icon)) { image in
@@ -76,7 +77,7 @@ struct AppRow: View {
             VStack {
                 Spacer()
                 Button(action: {
-                    
+                    selectedTab = 1
                 }) {
                     Text("GET")
                         .font(.subheadline.bold())
