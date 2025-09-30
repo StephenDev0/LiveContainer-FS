@@ -46,6 +46,7 @@ struct FlekstoreAppsListView: View {
 struct AppRow: View {
     let app: FSAppModel
     @Binding var selectedTab: Int
+    @EnvironmentObject private var flekstoreSharedModel: FlekstoreSharedModel
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             AsyncImage(url: URL(string: app.app_icon)) { image in
@@ -78,6 +79,8 @@ struct AppRow: View {
                 Spacer()
                 Button(action: {
                     selectedTab = 1
+                    flekstoreSharedModel.appInstallURL = app.install_url
+                    print("new set url: \(app.install_url)")
                 }) {
                     Text("GET")
                         .font(.subheadline.bold())

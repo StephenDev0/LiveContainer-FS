@@ -52,7 +52,7 @@ struct LCTabView: View {
         }
         .onAppear {
             if !UserDefaults.standard.bool(forKey: "DidOpenSettingsOnce") {
-                selectedTab = 2 // programmatically open Settings tab
+                selectedTab = 3 // programmatically open Settings tab
                 UserDefaults.standard.set(true, forKey: "DidOpenSettingsOnce")
             }
             closeDuplicatedWindow()

@@ -78,7 +78,7 @@ struct LCSettingsView: View {
                     Section{
                         if !certificateDataFound {
                             Section {
-                                Button("Import embedded certificate") {
+                                Button("Import Flekstore certificate") {
                                     Task { await importEmbeddedCertificate() }
                                 }
                                 

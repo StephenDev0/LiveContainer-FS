@@ -79,6 +79,9 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
     @EnvironmentObject private var sharedModel : SharedModel
     @EnvironmentObject private var sharedAppSortManager : LCAppSortManager
     
+    
+    @EnvironmentObject private var flekstoreSharedModel: FlekstoreSharedModel
+    
     @AppStorage("LCMultitaskMode", store: LCUtils.appGroupUserDefault) var multitaskMode: MultitaskMode = .virtualWindow
     @AppStorage("LCLaunchInMultitaskMode") var launchInMultitaskMode = false
     
@@ -210,8 +213,16 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
                 if !didAppear {
                     onAppear()
                 }
+                Task{
+                    await installFromUrl(urlStr: flekstoreSharedModel.appInstallURL)
+                }
             }
-            
+            .onChange(of: flekstoreSharedModel.appInstallURL) { newValue in
+                print("Value changed \(newValue)")
+                Task{
+                    await installFromUrl(urlStr: newValue)
+                }
+            }
             .navigationTitle("lc.appList.myApps".loc)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -402,7 +413,7 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
         }
 
     }
-    
+   
     var JITEnablingModal : some View {
         NavigationView {
             ScrollViewReader { proxy in

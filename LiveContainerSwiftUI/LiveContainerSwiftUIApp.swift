@@ -13,6 +13,8 @@ struct LiveContainerSwiftUIApp : SwiftUI.App {
     @State var appDataFolderNames: [String]
     @State var tweakFolderNames: [String]
     
+    @StateObject private var flekstoreSharedModel = FlekstoreSharedModel()
+    
     init() {
         let fm = FileManager()
         var tempAppDataFolderNames : [String] = []
@@ -94,6 +96,7 @@ struct LiveContainerSwiftUIApp : SwiftUI.App {
                 .handlesExternalEvents(preferring: ["*"], allowing: ["*"])
                 .environmentObject(DataManager.shared.model)
                 .environmentObject(LCAppSortManager.shared)
+                .environmentObject(flekstoreSharedModel)
         }
         
         if UIApplication.shared.supportsMultipleScenes, #available(iOS 16.1, *) {
