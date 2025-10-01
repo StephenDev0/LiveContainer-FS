@@ -25,14 +25,18 @@ jobs:
       - name: Build and Archive
         run: |
           set -o pipefail
-          xcodebuild clean archive \
-            -workspace "YourApp.xcworkspace" \
-            -scheme "YourScheme" \
-            -configuration Release \
-            -archivePath $PWD/build/YourApp.xcarchive \
-            -destination "generic/platform=iOS" \
-            CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO \
-          | xcpretty
+          
+          - name: Build and Archive
+  run: |
+    set -o pipefail
+    xcodebuild clean archive \
+      -project "LiveContainer.xcodeproj" \
+      -scheme "LiveContainer" \
+      -configuration Release \
+      -archivePath $PWD/build/LiveContainer.xcarchive \
+      -destination "generic/platform=iOS" \
+    | xcpretty
+
 
       - name: Export IPA
         run: |
