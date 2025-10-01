@@ -74,12 +74,15 @@ struct FlekstoreAppsListView: View {
                                 }
                             }
                         }
-                        .listStyle(.plain)
+                        .listStyle(.inset)
+                        .refreshable {
+                            Task { await viewModel.resetAndFetchApps() }
+                        }
                     }
                 }
             }
             .navigationTitle("FlekSt0re")
-            .navigationBarTitleDisplayMode(.automatic)
+            .navigationBarTitleDisplayMode(.inline)
             .searchable(
                 text: $viewModel.searchQuery,
                 placement: .navigationBarDrawer(displayMode: .always),
