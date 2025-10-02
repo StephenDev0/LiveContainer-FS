@@ -27,7 +27,8 @@ struct LCTabView: View {
 
         TabView(selection: $selectedTab) {
             FlekstoreAppsListView(selectedTab: $selectedTab)
-                .tabItem { Label("Flekstore", systemImage: "square.stack") }
+                .tabItem { Image("fsLogo").renderingMode(.template)
+                            Text("FlekSt0re") }
                 .tag(0)
             
             appListView
@@ -51,10 +52,10 @@ struct LCTabView: View {
             Text(errorInfo)
         }
         .onAppear {
-            if !UserDefaults.standard.bool(forKey: "DidOpenSettingsOnce") {
-                selectedTab = 3 // programmatically open Settings tab
-                UserDefaults.standard.set(true, forKey: "DidOpenSettingsOnce")
-            }
+//            if !UserDefaults.standard.bool(forKey: "DidOpenSettingsOnce") {
+//                selectedTab = 3 // programmatically open Settings tab
+//                UserDefaults.standard.set(true, forKey: "DidOpenSettingsOnce")
+//            }
             closeDuplicatedWindow()
             checkLastLaunchError()
             checkTeamId()
