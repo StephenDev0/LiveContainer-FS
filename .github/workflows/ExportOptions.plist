@@ -2,13 +2,24 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <!-- method can be: development, ad-hoc, enterprise, app-store -->
     <key>method</key>
     <string>ad-hoc</string>
+
+    <!-- disable bitcode compilation -->
     <key>compileBitcode</key>
     <false/>
+
+    <!-- manual signing style -->
     <key>signingStyle</key>
     <string>manual</string>
+
+    <!-- strip Swift symbols -->
     <key>stripSwiftSymbols</key>
     <true/>
+
+    <!-- include app extensions -->
+    <key>iCloudContainerEnvironment</key>
+    <string>Development</string>
 </dict>
 </plist>
