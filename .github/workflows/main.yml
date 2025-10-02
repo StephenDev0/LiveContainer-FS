@@ -27,7 +27,7 @@ jobs:
           export-method: ad-hoc
           configuration: Release
           output-path: artifacts/output.ipa
-          p12-base64: ${{ secrets.IOS_P12_BASE64 }}
-          certificate-password: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
-          mobileprovision-base64: ${{ secrets.IOS_MOBILE_PROVISION_BASE64 }}
-          team-id: ${{ secrets.IOS_TEAM_ID }}
+          p12-base64: ${{ secrets.P12_BASE64 }}
+          mobileprovision-base64: ${{ secrets.MOBILEPROVISION_BASE64 }}
+          code-signing-identity: ${{ secrets.CODE_SIGNING_IDENTITY }}
+          team-id: ${{ secrets.TEAM_ID }}
