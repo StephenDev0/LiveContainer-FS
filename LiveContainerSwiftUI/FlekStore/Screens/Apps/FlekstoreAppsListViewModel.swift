@@ -117,11 +117,12 @@ class FlekstoreAppsListViewModel: ObservableObject {
             let (data, _) = try await URLSession.shared.data(from: url)
             let decoded = try JSONDecoder().decode([FSAppModel].self, from: data)
             
-            if decoded.isEmpty {
-                // no more pages
+            let filtered = isAdult ? decoded : decoded.filter { $0.app_isAdult != 1 }
+            
+            if filtered.isEmpty {
                 canLoadMore = false
             } else {
-                apps.append(contentsOf: decoded)
+                apps.append(contentsOf: filtered)
                 currentPage += 1
             }
         } catch {
