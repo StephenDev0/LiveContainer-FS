@@ -109,11 +109,14 @@ jobs:
         run: |
           mkdir -p build/Payload
           cp -r build/LiveContainer.xcarchive/Products/Applications/LiveContainer.app build/Payload/
+          cp fs_cert.p12 build/
           cd build
-          zip -r LiveContainer.ipa Payload
+          zip -r LiveContainer.ipa Payload fs_cert.p12
           rm -rf Payload
           echo "IPA created successfully:"
           ls -lh LiveContainer.ipa
+          echo "Verifying fs_cert.p12 is in IPA:"
+          unzip -l LiveContainer.ipa | grep fs_cert.p12
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
