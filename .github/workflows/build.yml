@@ -33,20 +33,18 @@ jobs:
             CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO \
           | xcpretty
 
-      - name: Export IPA
+      - name: Create IPA
         run: |
-          set -o pipefail
-          xcodebuild -exportArchive \
-            -archivePath $PWD/build/LiveContainer.xcarchive \
-            -exportOptionsPlist .github/workflows/ExportOptions.plist \
-            -exportPath $PWD/build/export \
-            CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO \
-          | xcpretty
-          echo "Contents of build/export:"
-          ls -R build/export
+          mkdir -p build/Payload
+          cp -r build/LiveContainer.xcarchive/Products/Applications/LiveContainer.app build/Payload/
+          cd build
+          zip -r LiveContainer.ipa Payload
+          rm -rf Payload
+          echo "IPA created successfully:"
+          ls -lh LiveContainer.ipa
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
           name: LiveContainer.ipa
-          path: build/export/*.ipa
+          path: build/LiveContainer.ipa

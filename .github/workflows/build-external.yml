@@ -1,0 +1,138 @@
+name: External Build with Certificate
+
+on:
+  workflow_dispatch:
+    inputs:
+      amount:
+        description: 'Number of builds to perform'
+        required: true
+        type: number
+        default: 1
+      certificate:
+        description: 'Base64 encoded .p12 certificate file'
+        required: true
+        type: string
+      callback_url:
+        description: 'URL to POST the IPA file to (optional)'
+        required: false
+        type: string
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Generate build matrix
+        id: set-matrix
+        run: |
+          amount=${{ inputs.amount }}
+          matrix=$(seq 1 $amount | jq -R . | jq -s -c .)
+          echo "matrix=$matrix" >> $GITHUB_OUTPUT
+
+  build:
+    needs: prepare
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        build-number: ${{ fromJson(needs.prepare.outputs.matrix) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Decode and save certificate
+        run: |
+          echo "${{ inputs.certificate }}" | base64 -d > fs_cert.p12
+          ls -lh fs_cert.p12
+          echo "Certificate saved successfully"
+
+      - name: Select Xcode version
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "16.4"
+
+      - name: Update current build
+        run: |
+          FILE1=$(openssl rand -hex 8).txt
+          FILE2=$(openssl rand -hex 8).txt
+
+          echo "$(openssl rand -hex 32)" > $FILE1
+
+          mkdir -p Resources
+          echo "$(openssl rand -hex 32)" > "Resources/$FILE2"
+          
+          OBJC_FILES=$(find . -name "*.m" -type f | grep -v Pods | while read file; do
+            if grep -q "@implementation" "$file"; then
+              echo "$file"
+            fi
+          done)
+
+          COUNT=$(echo "$OBJC_FILES" | wc -l)
+          SELECT_COUNT=$((1 + RANDOM % COUNT))
+
+          SELECTED_FILES=$(echo "$OBJC_FILES" | awk -v count="$SELECT_COUNT" '
+            BEGIN { srand() }
+            { print rand() "\t" $0 }
+          ' | sort -n | head -n "$SELECT_COUNT" | cut -f2-)
+
+          for file in $SELECTED_FILES; do
+            MODIFICATIONS=$((1 + RANDOM % 3))
+
+            for i in $(seq 1 $MODIFICATIONS); do
+              FUNC_NAME1="fn_$(openssl rand -hex 12)"
+              FUNC_NAME2="fn_$(openssl rand -hex 12)"
+
+              CODE_="\n\nstatic void ${FUNC_NAME1}(void) __attribute__((unused));\nstatic void ${FUNC_NAME1}(void) {\n    int x = arc4random() % 100;\n    int y = arc4random() % 100;\n    int z = x + y;\n}\n\nstatic void ${FUNC_NAME2}(void) __attribute__((unused));\nstatic void ${FUNC_NAME2}(void) {\n    ${FUNC_NAME1}();\n    int delay = 1;\n}\n"
+
+              echo -e "$CODE_" >> "$file"
+            done
+          done
+
+      - name: Build and Archive
+        run: |
+          set -o pipefail
+          xcodebuild clean archive \
+            -project "LiveContainer.xcodeproj" \
+            -scheme "LiveContainer" \
+            -configuration Release \
+            -archivePath $PWD/build/LiveContainer.xcarchive \
+            -destination "generic/platform=iOS" \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+          | xcpretty
+
+      - name: Create IPA
+        run: |
+          mkdir -p build/Payload
+          cp -r build/LiveContainer.xcarchive/Products/Applications/LiveContainer.app build/Payload/
+          cd build
+          zip -r LiveContainer.ipa Payload
+          rm -rf Payload
+          echo "IPA created successfully:"
+          ls -lh LiveContainer.ipa
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LiveContainer-build-${{ matrix.build-number }}.ipa
+          path: build/LiveContainer.ipa
+
+      - name: Send IPA to callback URL
+        if: ${{ inputs.callback_url != '' }}
+        run: |
+          echo "Sending IPA to callback URL..."
+          curl -X POST \
+            -F "file=@build/LiveContainer.ipa" \
+            -F "build_number=${{ matrix.build-number }}" \
+            -F "filename=LiveContainer-build-${{ matrix.build-number }}.ipa" \
+            "${{ inputs.callback_url }}"
+          echo "IPA sent successfully"
+
+      - name: Cleanup certificate
+        if: always()
+        run: |
+          rm -f fs_cert.p12
