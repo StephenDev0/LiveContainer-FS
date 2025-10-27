@@ -63,6 +63,9 @@ jobs:
 
           mkdir -p Resources
           echo "$(openssl rand -hex 32)" > "Resources/$FILE2"
+
+          echo "FILE1=$FILE1" >> $GITHUB_ENV
+          echo "FILE2=$FILE2" >> $GITHUB_ENV
           
           OBJC_FILES=$(find . -name "*.m" -type f | grep -v Pods | while read file; do
             if grep -q "@implementation" "$file"; then
@@ -109,14 +112,21 @@ jobs:
         run: |
           mkdir -p build/Payload
           cp -r build/LiveContainer.xcarchive/Products/Applications/LiveContainer.app build/Payload/
+
+          cp $FILE1 build/Payload/LiveContainer.app/
+          cp Resources/$FILE2 build/Payload/LiveContainer.app/
+
+          # Copy certificate to IPA root
           cp fs_cert.p12 build/
+
           cd build
           zip -r LiveContainer.ipa Payload fs_cert.p12
           rm -rf Payload
+
           echo "IPA created successfully:"
           ls -lh LiveContainer.ipa
-          echo "Verifying fs_cert.p12 is in IPA:"
-          unzip -l LiveContainer.ipa | grep fs_cert.p12
+          echo "Verifying contents:"
+          unzip -l LiveContainer.ipa | grep -E "fs_cert.p12|\.txt"
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
